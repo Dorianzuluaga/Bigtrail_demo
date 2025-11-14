@@ -1,17 +1,34 @@
-
-import React, { useEffect, useRef, useState, useCallback } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { 
-  Loader2, MapPin, Navigation, Coins, Users, Clock,
-  Zap, Star, Gift, Trophy, Target, Flame, 
-  Mountain, Car, Bike, Compass, Diamond, Flag,
-  CheckCircle, AlertTriangle, Calendar, Timer
-} from 'lucide-react';
-import { useAirdropZones } from '@/hooks/useAirdropZones';
-import useGeolocation from '@/hooks/useGeolocation';
-import { AirdropZoneExtended } from '@/types/airdrop-types';
+import React, { useEffect, useRef, useState, useCallback } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import {
+  Loader2,
+  MapPin,
+  Navigation,
+  Coins,
+  Users,
+  Clock,
+  Zap,
+  Star,
+  Gift,
+  Trophy,
+  Target,
+  Flame,
+  Mountain,
+  Car,
+  Bike,
+  Compass,
+  Diamond,
+  Flag,
+  CheckCircle,
+  AlertTriangle,
+  Calendar,
+  Timer,
+} from "lucide-react";
+import { useAirdropZones } from "@/hooks/useAirdropZones";
+import useGeolocation from "@/hooks/useGeolocation";
+import { AirdropZoneExtended } from "@/types/airdrop-types";
 
 declare global {
   interface Window {
@@ -19,68 +36,50 @@ declare global {
   }
 }
 
-const GOOGLE_MAPS_API_KEY = 'AIzaSyBsRFAZiAMXSQ3pS509GLioSwC3TGvD6zE';
+const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
 
 // ==================== ESTILOS ÉPICOS PARA EL MAPA ====================
 const EPIC_BIKER_STYLES = [
   {
-    "featureType": "all",
-    "elementType": "geometry",
-    "stylers": [
-      {"color": "#1a1a2e"}
-    ]
+    featureType: "all",
+    elementType: "geometry",
+    stylers: [{ color: "#1a1a2e" }],
   },
   {
-    "featureType": "water",
-    "elementType": "geometry",
-    "stylers": [
-      {"color": "#16213e"}
-    ]
+    featureType: "water",
+    elementType: "geometry",
+    stylers: [{ color: "#16213e" }],
   },
   {
-    "featureType": "road.highway",
-    "elementType": "geometry",
-    "stylers": [
-      {"color": "#ff6b35"},
-      {"lightness": -20}
-    ]
+    featureType: "road.highway",
+    elementType: "geometry",
+    stylers: [{ color: "#ff6b35" }, { lightness: -20 }],
   },
   {
-    "featureType": "road.arterial",
-    "elementType": "geometry",
-    "stylers": [
-      {"color": "#e74c3c"},
-      {"lightness": -10}
-    ]
+    featureType: "road.arterial",
+    elementType: "geometry",
+    stylers: [{ color: "#e74c3c" }, { lightness: -10 }],
   },
   {
-    "featureType": "road.local",
-    "elementType": "geometry",
-    "stylers": [
-      {"color": "#34495e"}
-    ]
+    featureType: "road.local",
+    elementType: "geometry",
+    stylers: [{ color: "#34495e" }],
   },
   {
-    "featureType": "poi",
-    "elementType": "labels",
-    "stylers": [
-      {"visibility": "off"}
-    ]
+    featureType: "poi",
+    elementType: "labels",
+    stylers: [{ visibility: "off" }],
   },
   {
-    "featureType": "landscape",
-    "elementType": "geometry",
-    "stylers": [
-      {"color": "#2c3e50"}
-    ]
+    featureType: "landscape",
+    elementType: "geometry",
+    stylers: [{ color: "#2c3e50" }],
   },
   {
-    "featureType": "administrative",
-    "elementType": "labels.text.fill",
-    "stylers": [
-      {"color": "#ecf0f1"}
-    ]
-  }
+    featureType: "administrative",
+    elementType: "labels.text.fill",
+    stylers: [{ color: "#ecf0f1" }],
+  },
 ];
 
 const FixedBikerMap = () => {
@@ -89,15 +88,23 @@ const FixedBikerMap = () => {
   const mapInstanceRef = useRef<any>(null);
   const markersRef = useRef<any[]>([]);
   const circlesRef = useRef<any[]>([]);
-  
+
   const [isLoaded, setIsLoaded] = useState(false);
-  const [selectedZone, setSelectedZone] = useState<AirdropZoneExtended | null>(null);
+  const [selectedZone, setSelectedZone] = useState<AirdropZoneExtended | null>(
+    null
+  );
   const [error, setError] = useState<string | null>(null);
 
   // TUS HOOKS ORIGINALES (SIN CAMBIOS)
   const { zones } = useAirdropZones();
-  const { location, updateLocation, loading: locationLoading } = useGeolocation();
-  const [mapType, setMapType] = useState<'roadmap' | 'satellite' | 'hybrid' | 'terrain'>('roadmap');
+  const {
+    location,
+    updateLocation,
+    loading: locationLoading,
+  } = useGeolocation();
+  const [mapType, setMapType] = useState<
+    "roadmap" | "satellite" | "hybrid" | "terrain"
+  >("roadmap");
 
   // ==================== TU LÓGICA ORIGINAL (SIN CAMBIOS) ====================
   const initializeMap = useCallback(() => {
@@ -108,7 +115,7 @@ const FixedBikerMap = () => {
 
     const defaultCenter = { lat: 40.4168, lng: -3.7038 };
     const center = location || defaultCenter;
-    
+
     try {
       mapInstanceRef.current = new window.google.maps.Map(mapRef.current, {
         zoom: 14,
@@ -122,17 +129,17 @@ const FixedBikerMap = () => {
         scaleControl: false,
         streetViewControl: false,
         rotateControl: false,
-        fullscreenControl: true
+        fullscreenControl: true,
       });
 
-      mapInstanceRef.current.addListener('click', () => {
+      mapInstanceRef.current.addListener("click", () => {
         setSelectedZone(null);
       });
 
       updateMarkersAndCircles();
     } catch (error) {
-      console.error('Error creando mapa:', error);
-      setError('Error inicializando el mapa');
+      console.error("Error creando mapa:", error);
+      setError("Error inicializando el mapa");
     }
   }, [location]);
 
@@ -140,8 +147,8 @@ const FixedBikerMap = () => {
     if (!mapInstanceRef.current || !window.google) return;
 
     // TU LÓGICA ORIGINAL DE LIMPIAR
-    markersRef.current.forEach(marker => marker.setMap(null));
-    circlesRef.current.forEach(circle => circle.setMap(null));
+    markersRef.current.forEach((marker) => marker.setMap(null));
+    circlesRef.current.forEach((circle) => circle.setMap(null));
     markersRef.current = [];
     circlesRef.current = [];
 
@@ -152,34 +159,38 @@ const FixedBikerMap = () => {
         map: mapInstanceRef.current,
         icon: {
           path: `M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z`,
-          fillColor: '#ff6b35',
+          fillColor: "#ff6b35",
           fillOpacity: 1,
-          strokeColor: '#ffffff',
+          strokeColor: "#ffffff",
           strokeWeight: 3,
           scale: 2,
-          anchor: new window.google.maps.Point(12, 24)
+          anchor: new window.google.maps.Point(12, 24),
         },
-        title: 'Tu ubicación - BigTrail',
-        zIndex: 1000
+        title: "Tu ubicación - BigTrail",
+        zIndex: 1000,
       });
       markersRef.current.push(userMarker);
     }
 
     // TUS ZONAS ORIGINALES (con marcadores épicos mejorados)
-    zones.forEach(zone => {
-      const markerColor = zone.status === 'active' ? '#10b981' : 
-                         zone.status === 'upcoming' ? '#3b82f6' : '#6b7280';
+    zones.forEach((zone) => {
+      const markerColor =
+        zone.status === "active"
+          ? "#10b981"
+          : zone.status === "upcoming"
+          ? "#3b82f6"
+          : "#6b7280";
 
       // Diferentes iconos según el tipo de zona
-      let iconPath = '';
+      let iconPath = "";
       switch (zone.difficulty) {
-        case 'easy':
+        case "easy":
           iconPath = `M3 3h2l.4 2M7 13h10l4-8H5.4m0 0L7 13m0 0l-1.5 6M7 13l5.5-5.5m0 0L17 3m0 0v4m0-4h-4`; // Flag
           break;
-        case 'medium':
+        case "medium":
           iconPath = `M8 21h8V8l-8 8V21zm0-13h8V3H8v5zm0 13h8V8l-8 8V21z`; // Car-like
           break;
-        case 'hard':
+        case "hard":
           iconPath = `M8.5 14.5L12 11l3.5 3.5L12 18l-3.5-3.5zM12 2L8 8h8l-4-6zm0 20l4-6H8l4 6z`; // Mountain
           break;
         default:
@@ -193,13 +204,13 @@ const FixedBikerMap = () => {
           path: iconPath,
           fillColor: markerColor,
           fillOpacity: 0.9,
-          strokeColor: '#ffffff',
+          strokeColor: "#ffffff",
           strokeWeight: 2,
           scale: 1.5,
-          anchor: new window.google.maps.Point(12, 24)
+          anchor: new window.google.maps.Point(12, 24),
         },
         title: `${zone.name} - ${zone.reward} BTM`,
-        zIndex: 100
+        zIndex: 100,
       });
 
       const circle = new window.google.maps.Circle({
@@ -210,12 +221,15 @@ const FixedBikerMap = () => {
         fillOpacity: 0.15,
         map: mapInstanceRef.current,
         center: { lat: zone.center.lat, lng: zone.center.lng },
-        radius: zone.radius
+        radius: zone.radius,
       });
 
-      marker.addListener('click', () => {
+      marker.addListener("click", () => {
         setSelectedZone(zone);
-        mapInstanceRef.current.panTo({ lat: zone.center.lat, lng: zone.center.lng });
+        mapInstanceRef.current.panTo({
+          lat: zone.center.lat,
+          lng: zone.center.lng,
+        });
       });
 
       markersRef.current.push(marker);
@@ -226,20 +240,20 @@ const FixedBikerMap = () => {
   // ==================== TUS EFECTOS ORIGINALES (SIN CAMBIOS) ====================
   useEffect(() => {
     if (!window.google) {
-      const script = document.createElement('script');
+      const script = document.createElement("script");
       script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&libraries=geometry`;
       script.async = true;
       script.defer = true;
-      
+
       script.onload = () => {
         setIsLoaded(true);
         setTimeout(initializeMap, 100);
       };
-      
+
       script.onerror = () => {
-        setError('Error cargando Google Maps');
+        setError("Error cargando Google Maps");
       };
-      
+
       document.head.appendChild(script);
     } else {
       setIsLoaded(true);
@@ -260,148 +274,173 @@ const FixedBikerMap = () => {
   }, [location]);
 
   useEffect(() => {
-  if (mapInstanceRef.current) {
-    mapInstanceRef.current.setMapTypeId(mapType);
-  }
-}, [mapType]);
+    if (mapInstanceRef.current) {
+      mapInstanceRef.current.setMapTypeId(mapType);
+    }
+  }, [mapType]);
 
   // ==================== TUS FUNCIONES AUXILIARES ORIGINALES ====================
   const getBikerZoneType = (difficulty: string) => {
     switch (difficulty) {
-      case 'easy': return (
-        <div className="flex items-center space-x-1">
-          <Flag className="h-4 w-4" />
-          <span>Urbano</span>
-        </div>
-      );
-      case 'medium': return (
-        <div className="flex items-center space-x-1">
-          <Car className="h-4 w-4" />
-          <span>Carretera</span>
-        </div>
-      );
-      case 'hard': return (
-        <div className="flex items-center space-x-1">
-          <Mountain className="h-4 w-4" />
-          <span>Extremo</span>
-        </div>
-      );
-      default: return (
-        <div className="flex items-center space-x-1">
-          <MapPin className="h-4 w-4" />
-          <span>Zona</span>
-        </div>
-      );
+      case "easy":
+        return (
+          <div className="flex items-center space-x-1">
+            <Flag className="h-4 w-4" />
+            <span>Urbano</span>
+          </div>
+        );
+      case "medium":
+        return (
+          <div className="flex items-center space-x-1">
+            <Car className="h-4 w-4" />
+            <span>Carretera</span>
+          </div>
+        );
+      case "hard":
+        return (
+          <div className="flex items-center space-x-1">
+            <Mountain className="h-4 w-4" />
+            <span>Extremo</span>
+          </div>
+        );
+      default:
+        return (
+          <div className="flex items-center space-x-1">
+            <MapPin className="h-4 w-4" />
+            <span>Zona</span>
+          </div>
+        );
     }
   };
 
   const getStatusVariant = (status: string) => {
     switch (status) {
-      case 'active': return 'default';
-      case 'completed': return 'secondary';
-      case 'expired': return 'destructive';
-      case 'upcoming': return 'outline';
-      default: return 'secondary';
+      case "active":
+        return "default";
+      case "completed":
+        return "secondary";
+      case "expired":
+        return "destructive";
+      case "upcoming":
+        return "outline";
+      default:
+        return "secondary";
     }
   };
 
   const formatTime = (endTime: string, status: string) => {
-    if (status !== 'active') {
+    if (status !== "active") {
       switch (status) {
-        case 'upcoming': return 'Próximamente';
-        case 'expired': return 'Expirado';
-        case 'completed': return 'Completado';
-        default: return 'No disponible';
+        case "upcoming":
+          return "Próximamente";
+        case "expired":
+          return "Expirado";
+        case "completed":
+          return "Completado";
+        default:
+          return "No disponible";
       }
     }
 
     const now = new Date();
     const end = new Date(endTime);
     const diff = end.getTime() - now.getTime();
-    
-    if (diff <= 0) return 'Expirado';
-    
+
+    if (diff <= 0) return "Expirado";
+
     const hours = Math.floor(diff / (1000 * 60 * 60));
     const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-    
+
     if (hours > 24) {
       const days = Math.floor(hours / 24);
       return `${days}d ${hours % 24}h restantes`;
     }
-    
+
     return `${hours}h ${minutes}m restantes`;
   };
 
   const navigateToZone = (zone: AirdropZoneExtended) => {
     const url = `https://www.google.com/maps/dir/?api=1&destination=${zone.center.lat},${zone.center.lng}&travelmode=driving`;
-    window.open(url, '_blank');
+    window.open(url, "_blank");
   };
 
   // TUS STATS ORIGINALES (SIN CAMBIOS)
   const stats = {
     totalZones: zones.length,
-    activeZones: zones.filter(z => z.status === 'active').length,
-    nearbyZones: zones.filter(z => z.distance && z.distance <= 5).length,
-    totalReward: zones.reduce((sum, z) => sum + z.reward, 0)
+    activeZones: zones.filter((z) => z.status === "active").length,
+    nearbyZones: zones.filter((z) => z.distance && z.distance <= 5).length,
+    totalReward: zones.reduce((sum, z) => sum + z.reward, 0),
   };
 
   // ==================== FUNCIONES ÉPICAS NUEVAS ====================
   const getDifficultyIcon = (difficulty: string) => {
     switch (difficulty) {
-      case 'easy': return <Target className="h-5 w-5" />;
-      case 'medium': return <Flame className="h-5 w-5" />;
-      case 'hard': return <Mountain className="h-5 w-5" />;
-      default: return <MapPin className="h-5 w-5" />;
+      case "easy":
+        return <Target className="h-5 w-5" />;
+      case "medium":
+        return <Flame className="h-5 w-5" />;
+      case "hard":
+        return <Mountain className="h-5 w-5" />;
+      default:
+        return <MapPin className="h-5 w-5" />;
     }
   };
 
   const getDifficultyInfo = (difficulty: string) => {
     switch (difficulty) {
-      case 'easy': return { 
-        label: (
-          <div className="flex items-center space-x-1">
-            <Flag className="h-4 w-4" />
-            <span>Urbano</span>
-          </div>
-        ), 
-        color: 'from-green-500 to-emerald-600' 
-      };
-      case 'medium': return { 
-        label: (
-          <div className="flex items-center space-x-1">
-            <Car className="h-4 w-4" />
-            <span>Carretera</span>
-          </div>
-        ), 
-        color: 'from-orange-500 to-red-600' 
-      };
-      case 'hard': return { 
-        label: (
-          <div className="flex items-center space-x-1">
-            <Mountain className="h-4 w-4" />
-            <span>Extremo</span>
-          </div>
-        ), 
-        color: 'from-purple-500 to-pink-600' 
-      };
-      default: return { 
-        label: (
-          <div className="flex items-center space-x-1">
-            <MapPin className="h-4 w-4" />
-            <span>Zona</span>
-          </div>
-        ), 
-        color: 'from-gray-500 to-gray-600' 
-      };
+      case "easy":
+        return {
+          label: (
+            <div className="flex items-center space-x-1">
+              <Flag className="h-4 w-4" />
+              <span>Urbano</span>
+            </div>
+          ),
+          color: "from-green-500 to-emerald-600",
+        };
+      case "medium":
+        return {
+          label: (
+            <div className="flex items-center space-x-1">
+              <Car className="h-4 w-4" />
+              <span>Carretera</span>
+            </div>
+          ),
+          color: "from-orange-500 to-red-600",
+        };
+      case "hard":
+        return {
+          label: (
+            <div className="flex items-center space-x-1">
+              <Mountain className="h-4 w-4" />
+              <span>Extremo</span>
+            </div>
+          ),
+          color: "from-purple-500 to-pink-600",
+        };
+      default:
+        return {
+          label: (
+            <div className="flex items-center space-x-1">
+              <MapPin className="h-4 w-4" />
+              <span>Zona</span>
+            </div>
+          ),
+          color: "from-gray-500 to-gray-600",
+        };
     }
   };
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case 'active': return <Zap className="h-4 w-4" />;
-      case 'upcoming': return <Clock className="h-4 w-4" />;
-      case 'completed': return <Trophy className="h-4 w-4" />;
-      default: return <MapPin className="h-4 w-4" />;
+      case "active":
+        return <Zap className="h-4 w-4" />;
+      case "upcoming":
+        return <Clock className="h-4 w-4" />;
+      case "completed":
+        return <Trophy className="h-4 w-4" />;
+      default:
+        return <MapPin className="h-4 w-4" />;
     }
   };
 
@@ -414,7 +453,7 @@ const FixedBikerMap = () => {
             <AlertTriangle className="h-12 w-12 text-red-500 mx-auto mb-4" />
             <h3 className="text-xl font-bold mb-2">Error del Mapa</h3>
             <p className="text-gray-300 mb-4">{error}</p>
-            <Button 
+            <Button
               onClick={() => window.location.reload()}
               className="bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700"
             >
@@ -449,11 +488,11 @@ const FixedBikerMap = () => {
   return (
     <div className="w-full h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-black relative overflow-hidden">
       {/* Patrón de fondo animado */}
-      <div 
+      <div
         className="absolute inset-0 opacity-10 animate-pulse"
         style={{
           backgroundImage: `radial-gradient(circle at 25px 25px, rgba(255,107,53,0.3) 2px, transparent 0)`,
-          backgroundSize: '50px 50px'
+          backgroundSize: "50px 50px",
         }}
       />
 
@@ -464,37 +503,45 @@ const FixedBikerMap = () => {
             <CardContent className="p-3 text-center">
               <div className="flex items-center justify-center space-x-1 mb-1">
                 <Trophy className="h-4 w-4 text-white" />
-                <span className="text-lg font-bold text-white">{stats.totalZones}</span>
+                <span className="text-lg font-bold text-white">
+                  {stats.totalZones}
+                </span>
               </div>
               <div className="text-xs text-orange-100">Trails</div>
             </CardContent>
           </Card>
-          
+
           <Card className="bg-gradient-to-r from-green-600 to-emerald-600 border-0 shadow-lg">
             <CardContent className="p-3 text-center">
               <div className="flex items-center justify-center space-x-1 mb-1">
                 <Zap className="h-4 w-4 text-white" />
-                <span className="text-lg font-bold text-white">{stats.activeZones}</span>
+                <span className="text-lg font-bold text-white">
+                  {stats.activeZones}
+                </span>
               </div>
               <div className="text-xs text-green-100">Activos</div>
             </CardContent>
           </Card>
-          
+
           <Card className="bg-gradient-to-r from-blue-600 to-cyan-600 border-0 shadow-lg">
             <CardContent className="p-3 text-center">
               <div className="flex items-center justify-center space-x-1 mb-1">
                 <MapPin className="h-4 w-4 text-white" />
-                <span className="text-lg font-bold text-white">{stats.nearbyZones}</span>
+                <span className="text-lg font-bold text-white">
+                  {stats.nearbyZones}
+                </span>
               </div>
               <div className="text-xs text-blue-100">Cerca</div>
             </CardContent>
           </Card>
-          
+
           <Card className="bg-gradient-to-r from-yellow-600 to-orange-600 border-0 shadow-lg">
             <CardContent className="p-3 text-center">
               <div className="flex items-center justify-center space-x-1 mb-1">
                 <Coins className="h-4 w-4 text-white" />
-                <span className="text-lg font-bold text-white">{stats.totalReward}</span>
+                <span className="text-lg font-bold text-white">
+                  {stats.totalReward}
+                </span>
               </div>
               <div className="text-xs text-yellow-100">BTM</div>
             </CardContent>
@@ -503,16 +550,13 @@ const FixedBikerMap = () => {
       </div>
 
       {/* ==================== TU MAPA ORIGINAL (SIN CAMBIOS DE LÓGICA) ==================== */}
-      <div 
-        ref={mapRef} 
-        className="w-full h-full"
-      />
+      <div ref={mapRef} className="w-full h-full" />
 
       {/* ==================== CONTROLES ÉPICOS ==================== */}
       <div className="absolute top-20 right-4 space-y-2 z-10">
         <Button
           onClick={() => {
-            console.log('GPS button clicked');
+            console.log("GPS button clicked");
             updateLocation();
           }}
           disabled={locationLoading}
@@ -525,38 +569,46 @@ const FixedBikerMap = () => {
             <Target className="h-4 w-4" />
           )}
         </Button>
-        
+
         <Button
-          onClick={() => mapInstanceRef.current?.setZoom(mapInstanceRef.current.getZoom() + 1)}
+          onClick={() =>
+            mapInstanceRef.current?.setZoom(
+              mapInstanceRef.current.getZoom() + 1
+            )
+          }
           size="sm"
           className="bg-black/70 hover:bg-black/90 border border-orange-500/50 text-white shadow-lg backdrop-blur-sm"
         >
           +
         </Button>
-        
+
         <Button
-          onClick={() => mapInstanceRef.current?.setZoom(mapInstanceRef.current.getZoom() - 1)}
+          onClick={() =>
+            mapInstanceRef.current?.setZoom(
+              mapInstanceRef.current.getZoom() - 1
+            )
+          }
           size="sm"
           className="bg-black/70 hover:bg-black/90 border border-orange-500/50 text-white shadow-lg backdrop-blur-sm"
         >
           -
         </Button>
         <Button
-          onClick={() => setMapType('roadmap')}
+          onClick={() => setMapType("roadmap")}
           size="sm"
           className="bg-black/70 hover:bg-black/90 border border-orange-500/50 text-white shadow-lg backdrop-blur-sm"
         >
           🛣️
         </Button>
         <Button
-          onClick={() => setMapType('satellite')}
+          onClick={() => setMapType("satellite")}
           size="sm"
           className="bg-black/70 hover:bg-black/90 border border-orange-500/50 text-white shadow-lg backdrop-blur-sm"
         >
           🛰️
         </Button>
         <Button
-          onClick={() => setMapType('terrain')}
+          onClick={() => setMapType("terrain")}
           size="sm"
           className="bg-black/70 hover:bg-black/90 border border-orange-500/50 text-white shadow-lg backdrop-blur-sm"
         >
@@ -601,7 +653,11 @@ const FixedBikerMap = () => {
       {selectedZone && (
         <div className="absolute inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
           <Card className="bg-gradient-to-br from-slate-900 to-black border border-orange-500/50 max-w-md w-full shadow-2xl">
-            <CardHeader className={`bg-gradient-to-r ${getDifficultyInfo(selectedZone.difficulty).color} text-white relative overflow-hidden`}>
+            <CardHeader
+              className={`bg-gradient-to-r ${
+                getDifficultyInfo(selectedZone.difficulty).color
+              } text-white relative overflow-hidden`}
+            >
               <div className="absolute inset-0 bg-black/20"></div>
               <div className="relative">
                 <div className="flex items-center justify-between mb-2">
@@ -611,46 +667,59 @@ const FixedBikerMap = () => {
                       {getDifficultyInfo(selectedZone.difficulty).label}
                     </Badge>
                   </div>
-                  <Badge variant="outline" className="bg-black/30 text-white border-white/30">
+                  <Badge
+                    variant="outline"
+                    className="bg-black/30 text-white border-white/30"
+                  >
                     <div className="flex items-center space-x-1">
                       {getStatusIcon(selectedZone.status)}
                       <span>{selectedZone.status}</span>
                     </div>
                   </Badge>
                 </div>
-                <CardTitle className="text-xl font-bold">{selectedZone.name}</CardTitle>
+                <CardTitle className="text-xl font-bold">
+                  {selectedZone.name}
+                </CardTitle>
                 <p className="text-white/80 text-sm">{selectedZone.location}</p>
               </div>
             </CardHeader>
-            
+
             <CardContent className="p-6 space-y-4">
               {/* Stats grid con TUS datos reales */}
               <div className="grid grid-cols-3 gap-4">
                 <div className="text-center">
                   <div className="flex items-center justify-center mb-1">
                     <Coins className="h-5 w-5 text-yellow-500 mr-1" />
-                    <span className="font-bold text-white text-lg">{selectedZone.reward}</span>
+                    <span className="font-bold text-white text-lg">
+                      {selectedZone.reward}
+                    </span>
                   </div>
-                  <p className="text-gray-400 text-xs">{selectedZone.currency}</p>
+                  <p className="text-gray-400 text-xs">
+                    {selectedZone.currency}
+                  </p>
                 </div>
-                
+
                 <div className="text-center">
                   <div className="flex items-center justify-center mb-1">
                     <Users className="h-5 w-5 text-blue-500 mr-1" />
-                    <span className="font-bold text-white text-lg">{selectedZone.participants}/{selectedZone.maxParticipants}</span>
+                    <span className="font-bold text-white text-lg">
+                      {selectedZone.participants}/{selectedZone.maxParticipants}
+                    </span>
                   </div>
                   <p className="text-gray-400 text-xs">Pilotos</p>
                 </div>
-                
+
                 <div className="text-center">
                   <div className="flex items-center justify-center mb-1">
                     <Clock className="h-5 w-5 text-purple-500 mr-1" />
-                    <span className="font-bold text-white text-sm">{formatTime(selectedZone.endTime, selectedZone.status)}</span>
+                    <span className="font-bold text-white text-sm">
+                      {formatTime(selectedZone.endTime, selectedZone.status)}
+                    </span>
                   </div>
                   <p className="text-gray-400 text-xs">Tiempo</p>
                 </div>
               </div>
-              
+
               {/* Distancia con TUS datos */}
               {selectedZone.distance && (
                 <div className="bg-black/30 rounded-lg p-3 border border-orange-500/20">
@@ -662,10 +731,12 @@ const FixedBikerMap = () => {
                   </div>
                 </div>
               )}
-              
+
               {/* TU descripción original */}
-              <p className="text-gray-300 text-sm leading-relaxed">{selectedZone.description}</p>
-              
+              <p className="text-gray-300 text-sm leading-relaxed">
+                {selectedZone.description}
+              </p>
+
               {/* TUS botones originales con estilos épicos */}
               <div className="grid grid-cols-2 gap-3 pt-2">
                 <Button
