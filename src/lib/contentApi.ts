@@ -1,8 +1,13 @@
 // src/lib/contentApi.ts
 import { API_BASE_URL } from "./config";
 
+const DEMO_MODE = API_BASE_URL.includes("fake-api-demo.com");
 const API_URL = API_BASE_URL;
 
+const memory = {
+  contents: [] as any[],
+};
+const generateId = () => crypto.randomUUID();
 /**
  * API para la sección de Creador de Contenido.
  * Sigue la misma estructura que campaignApi, pero adaptada a los endpoints /content.
@@ -10,8 +15,12 @@ const API_URL = API_BASE_URL;
 export const contentApi = {
   // ==================== CONTENIDOS ====================
 
-  // 1️⃣ Obtener todos los contenidos del creador autenticado
+  // Obtener todos los contenidos del creador autenticado
   async getContents() {
+    if (DEMO_MODE) {
+      return memory.contents;
+    }
+
     const res = await fetch(`${API_URL}/content`, {
       method: "GET",
       headers: {
@@ -24,8 +33,11 @@ export const contentApi = {
     return res.json();
   },
 
-  // 2️⃣ Obtener detalle de un contenido por ID
+  // Obtener detalle de un contenido por ID
   async getContentById(contentId: string) {
+    if (DEMO_MODE) {
+      return memory.contents.find((c) => c.id === contentId);
+    }
     const res = await fetch(`${API_URL}/content/${contentId}`, {
       method: "GET",
       headers: {
@@ -38,13 +50,28 @@ export const contentApi = {
     return res.json();
   },
 
-  // 3️⃣ Crear nuevo contenido
+  // Crear nuevo contenido
   async createContent(contentData: {
     title: string;
     type: string;
     description: string;
     mediaUrl: string;
   }) {
+    if (DEMO_MODE) {
+      const newContent = {
+        id: generateId(),
+        views: 0,
+        likes: 0,
+        comments: 0,
+        shares: 0,
+        earnings: 0,
+        createdAt: new Date().toISOString(),
+        ...contentData,
+      };
+
+      memory.contents.push(newContent);
+      return newContent;
+    }
     const res = await fetch(`${API_URL}/content`, {
       method: "POST",
       headers: {
@@ -58,8 +85,19 @@ export const contentApi = {
     return res.json();
   },
 
-  // 4️⃣ Actualizar contenido existente
+  // Actualizar contenido existente
   async updateContent(contentId: string, updatedData: any) {
+    if (DEMO_MODE) {
+      const index = memory.contents.findIndex((c) => c.id === contentId);
+      if (index === -1) throw new Error("No existe contenido para actualizar");
+
+      memory.contents[index] = {
+        ...memory.contents[index],
+        ...updatedData,
+      };
+
+      return memory.contents[index];
+    }
     const res = await fetch(`${API_URL}/content/${contentId}`, {
       method: "PUT",
       headers: {
@@ -73,8 +111,12 @@ export const contentApi = {
     return res.json();
   },
 
-  // 5️⃣ Eliminar contenido
+  // Eliminar contenido
   async deleteContent(contentId: string) {
+    if (DEMO_MODE) {
+      memory.contents = memory.contents.filter((c) => c.id !== contentId);
+      return { success: true };
+    }
     const res = await fetch(`${API_URL}/content/${contentId}`, {
       method: "DELETE",
       headers: {

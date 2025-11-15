@@ -124,14 +124,18 @@ const CreatorDashboard = () => {
     try {
       const created = await contentService.createContent(newContent);
 
-      // 🧩 Normalizamos el contenido para que no falten campos esperados en el render
+      //  Normalizamos el contenido para que no falten campos esperados en el render
       const normalized = {
         ...created,
         views: created?.views ?? 0,
         date: created?.date ?? new Date().toISOString(),
       };
 
-      setContents((prev) => [normalized, ...prev]);
+      setContents((prev) => {
+        // Si ya existe el ID en el estado, no agregar
+        if (prev.find((c) => c.id === normalized.id)) return prev;
+        return [normalized, ...prev];
+      });
 
       setIsCreateModalOpen(false);
       setIsArticleModalOpen(false);
@@ -154,7 +158,7 @@ const CreatorDashboard = () => {
   const handleDelete = async (content: ContentItem) => {
     const confirmed = confirm(`¿Estás seguro de eliminar "${content.title}"?`);
     if (!confirmed)
-      return appToast.info({
+      return appToast.error({
         title: "Eliminación cancelada",
         description: "El contenido no fue eliminado.",
       });
@@ -271,34 +275,35 @@ const CreatorDashboard = () => {
                                 <img
                                   key={content.mediaUrl}
                                   src={content.mediaUrl}
-                                  alt={content.title}
+                                  alt={content.title || "Contenido"}
                                   className="w-full h-full object-cover"
                                 />
                               )
                             ) : (
-                              // si no hay mediaUrl (por ejemplo, es artículo sin imagen)
                               <FileText className="w-6 h-6 text-muted-foreground" />
                             )}
                           </div>
 
                           <div>
                             <CardTitle className="flex items-center gap-2">
-                              {content.title}
+                              {content.title || "Sin título"}
                               <Badge
                                 variant={getStatusColor(content.status) as any}
                               >
-                                {content.status}
+                                {content.status || "draft"}
                               </Badge>
                             </CardTitle>
                             <CardDescription>
-                              {new Date(content.date).toLocaleDateString(
-                                "es-ES"
-                              )}
+                              {content.date
+                                ? new Date(content.date).toLocaleDateString(
+                                    "es-ES"
+                                  )
+                                : "Sin fecha"}
                             </CardDescription>
                           </div>
                         </div>
+
                         <div className="flex flex-wrap justify-end gap-2">
-                          {/* botón de ver */}
                           <Button
                             variant="outline"
                             size="sm"
@@ -307,16 +312,15 @@ const CreatorDashboard = () => {
                             <Eye className="w-4 h-4 mr-2" />
                             Ver
                           </Button>
-                          {/* botón editar */}
+
                           <Button
                             variant="outline"
                             size="sm"
                             onClick={() => handleEdit(content)}
                           >
-                            {" "}
                             Editar
                           </Button>
-                          {/* botón de eliminar */}
+
                           <Button
                             variant="ghost"
                             size="icon"
@@ -327,34 +331,37 @@ const CreatorDashboard = () => {
                         </div>
                       </div>
                     </CardHeader>
+
                     <CardContent>
                       <div className="flex items-center gap-6 text-sm">
                         <div className="flex items-center gap-2">
                           <Eye className="w-4 h-4 text-muted-foreground" />
-                          <span>{content.views.toLocaleString()}</span>
+                          <span>{(content.views || 0).toLocaleString()}</span>
                         </div>
 
                         <div className="flex items-center gap-2">
                           <Heart className="w-4 h-4 text-muted-foreground" />
                           <span
                             className={
-                              content.likes > 0
+                              (content.likes || 0) > 0
                                 ? "text-green-500"
                                 : "text-red-500"
                             }
                           >
-                            {content.likes.toLocaleString()}
+                            {(content.likes || 0).toLocaleString()}
                           </span>
                         </div>
 
                         <div className="flex items-center gap-2">
                           <MessageCircle className="w-4 h-4 text-muted-foreground" />
-                          <span>{content.comments.toLocaleString()}</span>
+                          <span>
+                            {(content.comments || 0).toLocaleString()}
+                          </span>
                         </div>
 
                         <div className="flex items-center gap-2">
                           <TrendingUp className="w-4 h-4 text-muted-foreground" />
-                          <span>€{content.earnings}</span>
+                          <span>€{content.earnings || 0}</span>
                         </div>
 
                         <div

@@ -29,7 +29,9 @@ import {
 import { campaignApi } from "@/lib/campaignApi";
 import { API_BASE_URL, BRAND_ID } from "@/lib/config";
 import { appToast } from "@/components/ui/app-toast";
+import { contentApi } from "@/lib/contentApi";
 
+const DEMO_MODE = API_BASE_URL.includes("fake-api-demo.com");
 interface CreateModalProps {
   open: boolean;
   onClose: () => void;
@@ -106,67 +108,86 @@ export default function CreateModal({
       : "Crear Publicidad";
 
   const handleSubmit = async () => {
-    if (!name.trim())
+    if (!name.trim()) {
       return appToast.error({
         title: `Error creando ${typeLabel()}`,
         description: "El nombre es obligatorio.",
       });
+    }
 
-    try {
-      if (!BRAND_ID)
+    if (!BRAND_ID) {
+      return appToast.error({
+        title: `Error creando ${typeLabel()}`,
+        description: "Falta BRAND_ID.",
+      });
+    }
+
+    let campaignData: any = {};
+
+    if (type === "campaign" || type === "advertising") {
+      const budget = Number(budgetText || 0);
+      if (Number.isNaN(budget) || budget < 0) {
         return appToast.error({
           title: `Error creando ${typeLabel()}`,
-          description: "Falta BRAND_ID.",
+          description: "El presupuesto debe ser un número válido.",
         });
-
-      let campaignData: any = {};
-      if (type === "campaign" || type === "advertising") {
-        const budget = Number(budgetText || 0);
-        if (Number.isNaN(budget) || budget < 0)
-          return appToast.error({
-            title: `Error creando ${typeLabel()}`,
-            description: "El presupuesto debe ser un número válido.",
-          });
-
-        campaignData = {
-          type,
-          name,
-          description: description || "",
-          budget,
-          adType: type === "campaign" ? adType : adTypeAdvertising || "",
-          content: content || "",
-          ctaUrl: ctaUrl || "",
-        };
-      } else if (type === "airdrop") {
-        if (!reward.trim())
-          return appToast.error({
-            title: `Error creando ${typeLabel()}`,
-            description: "La recompensa es obligatoria.",
-          });
-
-        campaignData = {
-          type: "airdrop",
-          name,
-          description: description || "",
-          reward,
-        };
       }
 
-      // brandId como query param
-      const res = await fetch(`${API_BASE_URL}/campaigns?brandId=${BRAND_ID}`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(campaignData),
-      });
+      campaignData = {
+        type,
+        name,
+        description: description || "",
+        budget,
+        adType: type === "campaign" ? adType : adTypeAdvertising || "",
+        content: content || "",
+        ctaUrl: ctaUrl || "",
+      };
+    } else if (type === "airdrop") {
+      if (!reward.trim()) {
+        return appToast.error({
+          title: `Error creando ${typeLabel()}`,
+          description: "La recompensa es obligatoria.",
+        });
+      }
 
-      const resJson = await res.json();
+      campaignData = {
+        type: "airdrop",
+        name,
+        description: description || "",
+        reward,
+      };
+    }
 
-      if (!res.ok)
-        throw new Error(
-          `Error creando ${typeLabel()}: ${JSON.stringify(resJson)}`
-        );
+    try {
+      let resJson;
+
+      if (DEMO_MODE) {
+        // Demo: usar APIs simuladas
+        if (type === "advertising") {
+          resJson = await contentApi.createContent(campaignData);
+        } else {
+          resJson = await campaignApi.createCampaign(campaignData);
+        }
+      } else {
+        // Producción: fetch directo
+        const url =
+          type === "advertising"
+            ? `${API_BASE_URL}/content`
+            : `${API_BASE_URL}/campaigns?brandId=${BRAND_ID}`;
+
+        const res = await fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(campaignData),
+        });
+
+        resJson = await res.json();
+
+        if (!res.ok)
+          throw new Error(
+            `Error creando ${typeLabel()}: ${JSON.stringify(resJson)}`
+          );
+      }
 
       appToast.success({
         title: successTitle(type),

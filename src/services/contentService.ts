@@ -3,10 +3,18 @@ import { API_BASE_URL, BRAND_ID } from "@/lib/config";
 import { ContentItem } from "@/types/content";
 
 const API_URL = `${API_BASE_URL}/content`;
+const DEMO_MODE = !BRAND_ID || API_BASE_URL.includes("fake-api-demo.com");
+
+const memory = {
+  contents: [] as ContentItem[],
+};
+
+const generateId = () => crypto.randomUUID();
 
 export const contentService = {
   // Obtener todos los contenidos
   async getAllContents(): Promise<ContentItem[]> {
+    if (DEMO_MODE) return memory.contents;
     const res = await fetch(`${API_URL}?brandId=${BRAND_ID}`, {
       method: "GET",
       headers: {
@@ -29,6 +37,33 @@ export const contentService = {
   async createContent(
     newContent: Omit<ContentItem, "id" | "date">
   ): Promise<ContentItem> {
+    if (DEMO_MODE) {
+      // 1️⃣ Generar un ID único
+      const id = crypto.randomUUID();
+
+      const content: ContentItem = {
+        id,
+        date: new Date().toISOString(),
+        title: newContent.title || "Título de prueba",
+        type: newContent.type || "photo",
+        description: newContent.description || "",
+        mediaUrl: newContent.mediaUrl || "",
+        status: newContent.status || "draft",
+        brandId: newContent.brandId || BRAND_ID || "",
+        views: 0,
+        likes: 0,
+        comments: 0,
+        earnings: 0,
+      };
+
+      // 2️⃣ Evitar duplicados por id
+      if (!memory.contents.find((c) => c.id === id)) {
+        memory.contents.push(content);
+      }
+
+      return content;
+    }
+
     const res = await fetch(`${API_URL}?brandId=${BRAND_ID}`, {
       method: "POST",
       headers: {
@@ -53,6 +88,12 @@ export const contentService = {
     contentID: string,
     updatedata: Partial<ContentItem>
   ): Promise<ContentItem> {
+    if (DEMO_MODE) {
+      const index = memory.contents.findIndex((c) => c.id === contentID);
+      if (index === -1) throw new Error("No existe contenido para actualizar");
+      memory.contents[index] = { ...memory.contents[index], ...updatedata };
+      return memory.contents[index];
+    }
     const res = await fetch(`${API_URL}/${contentID}?brandId=${BRAND_ID}`, {
       method: "PUT",
       headers: {
@@ -73,6 +114,11 @@ export const contentService = {
 
   // Eliminar contenido
   async deleteContent(contentID: string): Promise<boolean> {
+    if (DEMO_MODE) {
+      memory.contents = memory.contents.filter((c) => c.id !== contentID);
+      return true;
+    }
+
     const res = await fetch(`${API_URL}/${contentID}?brandId=${BRAND_ID}`, {
       method: "DELETE",
       headers: {
@@ -112,6 +158,11 @@ export const contentService = {
   },
   // Subir media (archivo)
   async uploadMedia(formData: FormData): Promise<{ mediaUrl: string }> {
+    if (DEMO_MODE) {
+      // Generamos una URL de demo para la previsualización
+      const demoUrl = URL.createObjectURL(formData.get("file") as Blob);
+      return { mediaUrl: demoUrl };
+    }
     try {
       const res = await fetch(`${API_BASE_URL}/uploads?brandId=${BRAND_ID}`, {
         method: "POST",

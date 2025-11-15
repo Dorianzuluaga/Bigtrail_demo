@@ -14,7 +14,9 @@ import { appToast } from "@/components/ui/app-toast";
 import { error } from "console";
 import { contentService } from "@/services/contentService";
 import { ContentItem } from "@/types/content";
-import { BRAND_ID } from "@/lib/config";
+import { API_BASE_URL, BRAND_ID } from "@/lib/config";
+
+const DEMO_MODE = !BRAND_ID || API_BASE_URL.includes("fake-api-demo.com");
 
 interface CreateContentModalProps {
   open: boolean;
@@ -22,6 +24,11 @@ interface CreateContentModalProps {
   onCreate: (newContent: any) => void;
   onOpenArticle: () => void; // 👈 añadimos esta prop
 }
+const memory = {
+  contents: [] as any[],
+};
+
+const generateId = () => crypto.randomUUID();
 
 const CreateContentModal: React.FC<CreateContentModalProps> = ({
   open,
@@ -59,7 +66,6 @@ const CreateContentModal: React.FC<CreateContentModalProps> = ({
   };
 
   const handleSave = async () => {
-    // 1️⃣ Validación básica
     if (!title || (["photo", "video", "pdf"].includes(type) && !file)) {
       return appToast.error({
         title: "Error creando contenido",
@@ -70,8 +76,7 @@ const CreateContentModal: React.FC<CreateContentModalProps> = ({
     try {
       let mediaUrlToSend: string | undefined = previewUrl;
 
-      // 2️⃣ Subir miniatura si es imagen
-      if (file && type === "photo") {
+      if (file && type === "photo" && !DEMO_MODE) {
         const formData = new FormData();
         formData.append("file", file);
 
@@ -84,23 +89,28 @@ const CreateContentModal: React.FC<CreateContentModalProps> = ({
         });
       }
 
-      // 3️⃣ Construir payload para enviar al backend
-      const payload: Omit<ContentItem, "id" | "date"> = {
+      // Construir payload
+      const newContent = {
+        id: DEMO_MODE ? generateId() : undefined,
         title,
         description,
         type,
         mediaUrl: mediaUrlToSend,
         status: "draft",
         brandId: BRAND_ID,
+        createdAt: new Date().toISOString(),
       };
 
-      // 4️⃣ Enviar al backend
-      const createdContent = await contentService.createContent(payload);
+      let createdContent;
 
-      // 5️⃣ Actualizar estado local
+      if (DEMO_MODE) {
+        memory.contents.push(newContent);
+        createdContent = newContent;
+      } else {
+        createdContent = await contentService.createContent(newContent);
+      }
+
       onCreate(createdContent);
-
-      // 6️⃣ Limpiar modal y campos
       handleReset();
       onClose();
 

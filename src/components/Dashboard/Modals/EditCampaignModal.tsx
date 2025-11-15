@@ -22,6 +22,7 @@ import {
 import { BarChart3 } from "lucide-react";
 import { CampaignUnion } from "@/types/campaign";
 import { campaignApi } from "@/lib/campaignApi";
+import { contentApi } from "@/lib/contentApi";
 
 interface EditCampaignModalProps {
   campaignData: CampaignUnion;
@@ -143,12 +144,24 @@ export default function EditCampaignModal({
     updatedCampaign.audience = {};
 
     try {
-      const updated = await campaignApi.updateCampaign(
-        campaignData.id,
-        updatedCampaign
-      );
+      let updated;
+
+      if (campaignData.type === "advertising") {
+        // Publicidad → contentApi
+        updated = await contentApi.updateContent(
+          campaignData.id,
+          updatedCampaign
+        );
+      } else {
+        // Campaign o Airdrop → campaignApi
+        updated = await campaignApi.updateCampaign(
+          campaignData.id,
+          updatedCampaign
+        );
+      }
+
       onUpdate(updated);
-      setForm(createInitialForm(updated)); // Actualiza el form con los datos más recientes
+      setForm(createInitialForm(updated));
       setOpen(false);
     } catch (error: any) {
       console.error("Error actualizando campaña:", error);
